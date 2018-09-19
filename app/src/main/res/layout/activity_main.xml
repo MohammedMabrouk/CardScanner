@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MainActivity"
+    android:gravity="center_horizontal"
+    android:background="@mipmap/background">
+
+
+
+    <ImageView
+        android:id="@+id/iv_scanLogo"
+        android:layout_width="@dimen/iv_logo_size"
+        android:layout_height="@dimen/iv_logo_size"
+        android:src="@mipmap/logo"
+        android:layout_margin="@dimen/iv_logo_margin"
+        android:layout_centerHorizontal="true"/>
+
+    <Button
+        android:id="@+id/btn_start"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/iv_scanLogo"
+        android:layout_centerHorizontal="true"
+        android:text="Start"
+        android:textAllCaps="false"
+        android:textSize="@dimen/btn_scan_now_font_size"
+        android:layout_margin="@dimen/btn_scan_now_margin"
+        android:paddingLeft="@dimen/btn_scan_now_horizontal_padding"
+        android:paddingRight="@dimen/btn_scan_now_horizontal_padding"
+        android:paddingTop="@dimen/btn_scan_now_vertical_padding"
+        android:paddingBottom="@dimen/btn_scan_now_vertical_padding"
+        android:fontFamily="sans-serif-thin"
+        android:textColor="@color/scanbtn"
+        android:background="@drawable/bg_btn_scannow"/>
+
+</RelativeLayout>
+
