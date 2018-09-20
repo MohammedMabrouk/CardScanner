@@ -12,36 +12,36 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package com.example.mohamed.cardscanner;
+package com.example.mohamed.cardscanner.Graphic;
 
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
-import android.graphics.Rect;
+import android.graphics.RectF;
+import android.util.Log;
 
-import com.google.firebase.ml.vision.document.FirebaseVisionDocumentText;
 
-import java.util.List;
+import com.google.firebase.ml.vision.text.FirebaseVisionText;
 
 /**
  * Graphic instance for rendering TextBlock position, size, and ID within an associated graphic
  * overlay view.
  */
-public class CloudTextGraphic extends GraphicOverlay.Graphic {
-    private static final int TEXT_COLOR = Color.GREEN;
-    private static final float TEXT_SIZE = 60.0f;
-    private static final float STROKE_WIDTH = 5.0f;
+public class TextGraphic extends GraphicOverlay.Graphic {
+
+    private static final String TAG = "TextGraphic";
+    private static final int TEXT_COLOR = Color.RED;
+    private static final float TEXT_SIZE = 54.0f;
+    private static final float STROKE_WIDTH = 4.0f;
 
     private final Paint rectPaint;
     private final Paint textPaint;
-    private final FirebaseVisionDocumentText.Word word;
-    private final GraphicOverlay overlay;
+    private final FirebaseVisionText.Element element;
 
-    CloudTextGraphic(GraphicOverlay overlay, FirebaseVisionDocumentText.Word word) {
+    public TextGraphic(GraphicOverlay overlay, FirebaseVisionText.Element element) {
         super(overlay);
 
-        this.word = word;
-        this.overlay = overlay;
+        this.element = element;
 
         rectPaint = new Paint();
         rectPaint.setColor(TEXT_COLOR);
@@ -60,20 +60,16 @@ public class CloudTextGraphic extends GraphicOverlay.Graphic {
      */
     @Override
     public void draw(Canvas canvas) {
-        if (word == null) {
+        Log.d(TAG, "on draw text graphic");
+        if (element == null) {
             throw new IllegalStateException("Attempting to draw a null text.");
         }
 
-        float x = overlay.getWidth() / 4.0f;
-        float y = overlay.getHeight() / 4.0f;
+        // Draws the bounding box around the TextBlock.
+        RectF rect = new RectF(element.getBoundingBox());
+        canvas.drawRect(rect, rectPaint);
 
-        StringBuilder wordStr = new StringBuilder();
-        Rect wordRect = word.getBoundingBox();
-        canvas.drawRect(wordRect, rectPaint);
-        List<FirebaseVisionDocumentText.Symbol> symbols = word.getSymbols();
-        for (int m = 0; m < symbols.size(); m++) {
-            wordStr.append(symbols.get(m).getText());
-        }
-        canvas.drawText(wordStr.toString(), wordRect.left, wordRect.bottom, textPaint);
+        // Renders the text at the bottom of the box.
+        canvas.drawText(element.getText(), rect.left, rect.bottom, textPaint);
     }
 }

@@ -1,217 +1,237 @@
 package com.example.mohamed.cardscanner;
 
-import android.content.Context;
+import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.content.res.AssetManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.os.Build;
+import android.net.Uri;
+import android.os.Environment;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
+import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.ContextCompat;
+import android.support.v4.content.FileProvider;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.util.Pair;
+import android.util.Log;
 import android.view.View;
-import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.Toast;
 
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.firebase.ml.vision.FirebaseVision;
-import com.google.firebase.ml.vision.common.FirebaseVisionImage;
-import com.google.firebase.ml.vision.document.FirebaseVisionDocumentText;
-import com.google.firebase.ml.vision.document.FirebaseVisionDocumentTextRecognizer;
-import com.google.firebase.ml.vision.text.FirebaseVisionText;
-import com.google.firebase.ml.vision.text.FirebaseVisionTextRecognizer;
+import com.example.mohamed.cardscanner.Graphic.GraphicOverlay;
+import com.example.mohamed.cardscanner.Utils.PermissionsUtilities;
+import com.example.mohamed.cardscanner.MLkit.TextRecognition;
 
+import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.util.List;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements TextRecognition.OnCardNumberDetectedListener{
 
-    private static final int REQUEST_IMAGE_CAPTURE = 2;
+    private final static String TAG = "MainActivity" + "TAGG";
+    private View mainLayout;
+
+
     private Button startBtn;
     private ImageView capturedImageView;
     private Bitmap capturedImage;
     private GraphicOverlay mGraphicOverlay;
-    // Max width (portrait mode)
-    private Integer mImageMaxWidth;
-    // Max height (portrait mode)
-    private Integer mImageMaxHeight;
+
+
+    private static final int REQUEST_GROUP = 0;
+    private static final int REQUEST_STORAGE = 1;
+
+    private static final int REQUEST_TAKE_PHOTO = 1;
+
+    private static String[] PERMISSIONS_GROUP = {Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE};
+
+    // path to the captured photo
+    String mCurrentPhotoPath;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        //capturedImageView = findViewById(R.id.capture_iv);
+        capturedImageView = findViewById(R.id.image_view);
+        mainLayout = findViewById(R.id.main_layout);
+
+        mGraphicOverlay = findViewById(R.id.graphic_overlay);
 
         findViewById(R.id.btn_start).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                /*// if android version is greater than 6
-                if(Build.VERSION.SDK_INT >= 23){
-                    // requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 1);
-                    Toast.makeText(MainActivity.this, "Your on 6+", Toast.LENGTH_SHORT).show();
-                }
-                dispatchTakePictureIntent();*/
+
                 startCamera();
 
             }
         });
     }
 
-    private void startCamera(){
-        if(checkCameraPermission()){
-            // raedy to go
-        }else{
-            // request camera permission
-
+    private void startCamera() {
+        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.CAMERA)
+                != PackageManager.PERMISSION_GRANTED || ActivityCompat.checkSelfPermission(this,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                != PackageManager.PERMISSION_GRANTED) {
+            Log.v(TAG, "Permission are not allowed, asking for it now.");
+            requestPermissions();
+        }else {
+            Log.v(TAG, "Permission are allowed, starting camera.");
+            dispatchTakePictureIntent();
         }
     }
 
-    private boolean checkCameraPermission(){
-        return ActivityCompat.checkSelfPermission(this, android.Manifest.permission.CAMERA)
-                == PackageManager.PERMISSION_GRANTED;
+    // permissions
+    private void requestPermissions() {
+        if (ActivityCompat.shouldShowRequestPermissionRationale(this,
+                android.Manifest.permission.CAMERA) || ActivityCompat.shouldShowRequestPermissionRationale(this,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
+
+            Log.v(TAG, "second time to ask.");
+
+            Snackbar.make(mainLayout, R.string.permission_rationale,
+                    Snackbar.LENGTH_INDEFINITE)
+                    .setAction(R.string.allow, new View.OnClickListener() {
+                        @Override
+                        public void onClick(View view) {
+                            ActivityCompat.requestPermissions(MainActivity.this,
+                                    new String[]{android.Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                                    REQUEST_GROUP);
+                        }
+                    })
+                    .show();
+        } else {
+            Log.v(TAG, "First time to ask.");
+            ActivityCompat.requestPermissions(this, new String[]{android.Manifest.permission.CAMERA
+                            , Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                    REQUEST_GROUP);
+        }
     }
+
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
+                                           @NonNull int[] grantResults) {
+
+        Log.v(TAG, "inside on request result.");
+        if (requestCode == REQUEST_GROUP) {
+
+            if (PermissionsUtilities.verifyPermissions(grantResults)) {
+                // All required permissions have been granted, display contacts fragment.
+                Snackbar.make(mainLayout, R.string.permissions_granted,
+                        Snackbar.LENGTH_SHORT)
+                        .show();
+                // TODO: add continue to camera
+            } else {
+
+                Snackbar.make(mainLayout, R.string.permissions_not_granted,
+                        Snackbar.LENGTH_SHORT)
+                        .show();
+            }
+        } else {
+            super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        }
+    }
+
+
+
 
     private void dispatchTakePictureIntent() {
         Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        // Ensure that there's a camera activity to handle the intent
         if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
-            startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE);
-        }
-    }
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK) {
-            Bundle extras = data.getExtras();
-            capturedImage = (Bitmap) extras.get("data");
-
-            //runTextRecognition();
-            //capturedImage = resize();
-            capturedImageView.setImageBitmap(capturedImage);
-        }
-    }
-    private void runTextRecognition() {
-        FirebaseVisionImage image = FirebaseVisionImage.fromBitmap(capturedImage);
-        FirebaseVisionTextRecognizer detector = FirebaseVision.getInstance()
-                .getOnDeviceTextRecognizer();
-
-        detector.processImage(image)
-                .addOnSuccessListener(
-                        new OnSuccessListener<FirebaseVisionText>() {
-                            @Override
-                            public void onSuccess(FirebaseVisionText texts) {
-                                processTextRecognitionResult(texts);
-                            }
-                        })
-                .addOnFailureListener(
-                        new OnFailureListener() {
-                            @Override
-                            public void onFailure(@NonNull Exception e) {
-                                // Task failed with an exception
-                                e.printStackTrace();
-                            }
-                        });
-    }
-
-    private void processTextRecognitionResult(FirebaseVisionText texts) {
-        List<FirebaseVisionText.TextBlock> blocks = texts.getTextBlocks();
-        if (blocks.size() == 0) {
-            showToast("No text found");
-            return;
-        }
-        mGraphicOverlay.clear();
-        for (int i = 0; i < blocks.size(); i++) {
-            List<FirebaseVisionText.Line> lines = blocks.get(i).getLines();
-            for (int j = 0; j < lines.size(); j++) {
-                List<FirebaseVisionText.Element> elements = lines.get(j).getElements();
-                for (int k = 0; k < elements.size(); k++) {
-                    GraphicOverlay.Graphic textGraphic = new TextGraphic(mGraphicOverlay, elements.get(k));
-                    mGraphicOverlay.add(textGraphic);
-
-                }
+            // Create the File where the photo should go
+            File photoFile = null;
+            try {
+                photoFile = createImageFile();
+            } catch (IOException ex) {
+                // Error occurred while creating the File
+            }
+            // Continue only if the File was successfully created
+            if (photoFile != null) {
+                Uri photoURI = FileProvider.getUriForFile(this,
+                        "com.example.mohamed.cardscanner",
+                        photoFile);
+                takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI);
+                startActivityForResult(takePictureIntent, REQUEST_TAKE_PHOTO);
             }
         }
     }
 
 
+    // make image public to other apps
 
-
-    private void showToast(String message) {
-        Toast.makeText(getApplicationContext(), message, Toast.LENGTH_SHORT).show();
+    private void galleryAddPic() {
+        Intent mediaScanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
+        File f = new File(mCurrentPhotoPath);
+        Uri contentUri = Uri.fromFile(f);
+        mediaScanIntent.setData(contentUri);
+        this.sendBroadcast(mediaScanIntent);
     }
 
-    // Functions for loading images from app assets.
-
-    // Returns max image width, always for portrait mode. Caller needs to swap width / height for
-    // landscape mode.
-    private Integer getImageMaxWidth() {
-        if (mImageMaxWidth == null) {
-            // Calculate the max width in portrait mode. This is done lazily since we need to
-            // wait for
-            // a UI layout pass to get the right values. So delay it to first time image
-            // rendering time.
-            mImageMaxWidth = capturedImageView.getWidth();
-        }
-
-        return mImageMaxWidth;
-    }
-
-    // Returns max image height, always for portrait mode. Caller needs to swap width / height for
-    // landscape mode.
-    private Integer getImageMaxHeight() {
-        if (mImageMaxHeight == null) {
-            // Calculate the max width in portrait mode. This is done lazily since we need to
-            // wait for
-            // a UI layout pass to get the right values. So delay it to first time image
-            // rendering time.
-            mImageMaxHeight =
-                    capturedImageView.getHeight();
-        }
-
-        return mImageMaxHeight;
-    }
-
-    // Gets the targeted width / height.
-    private Pair<Integer, Integer> getTargetedWidthHeight() {
-        int targetWidth;
-        int targetHeight;
-        int maxWidthForPortraitMode = getImageMaxWidth();
-        int maxHeightForPortraitMode = getImageMaxHeight();
-        targetWidth = maxWidthForPortraitMode;
-        targetHeight = maxHeightForPortraitMode;
-        return new Pair<>(targetWidth, targetHeight);
-    }
-
-    private Bitmap resize(){
+    // decode the image
+    private void setPic() {
         // Get the dimensions of the View
-        Pair<Integer, Integer> targetedSize = getTargetedWidthHeight();
+        int targetW = capturedImageView.getWidth();
+        int targetH = capturedImageView.getHeight();
 
-        int targetWidth = targetedSize.first;
-        int maxHeight = targetedSize.second;
+        // Get the dimensions of the bitmap
+        BitmapFactory.Options bmOptions = new BitmapFactory.Options();
+        bmOptions.inJustDecodeBounds = true;
+        BitmapFactory.decodeFile(mCurrentPhotoPath, bmOptions);
+        int photoW = bmOptions.outWidth;
+        int photoH = bmOptions.outHeight;
 
         // Determine how much to scale down the image
-        float scaleFactor =
-                Math.max(
-                        (float) capturedImage.getWidth() / (float) targetWidth,
-                        (float) capturedImage.getHeight() / (float) maxHeight);
+        int scaleFactor = Math.min(photoW / targetW, photoH / targetH);
 
-        Bitmap resizedBitmap =
-                Bitmap.createScaledBitmap(
-                        capturedImage,
-                        (int) (capturedImage.getWidth() / scaleFactor),
-                        (int) (capturedImage.getHeight() / scaleFactor),
-                        true);
+        // Decode the image file into a Bitmap sized to fill the View
+        bmOptions.inJustDecodeBounds = false;
+        bmOptions.inSampleSize = scaleFactor;
+        bmOptions.inPurgeable = true;
 
-        return resizedBitmap;
+        capturedImage = BitmapFactory.decodeFile(mCurrentPhotoPath, bmOptions);
+        capturedImageView.setImageBitmap(capturedImage);
     }
 
+    private File createImageFile() throws IOException {
+        // Create an image file name
+        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+        String imageFileName = "JPEG_" + timeStamp + "_";
+        File storageDir = getExternalFilesDir(Environment.DIRECTORY_PICTURES);
+        File image = File.createTempFile(
+                imageFileName,  /* prefix */
+                ".jpg",         /* suffix */
+                storageDir      /* directory */
+        );
+
+        // Save a file: path for use with ACTION_VIEW intents
+        mCurrentPhotoPath = image.getAbsolutePath();
+        return image;
+    }
+
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == REQUEST_TAKE_PHOTO && resultCode == RESULT_OK) {
+            // decode image
+            setPic();
+            // make it public
+            galleryAddPic();
+            // run OCR
+            TextRecognition tr = new TextRecognition(this, capturedImage, this);
+            tr.runTextRecognition();
+            //Log.v(TAG, "card Number is: " + tr.getCardNumber());
+
+        }
+    }
+
+
+    @Override
+    public void onNumberDetection(String cardNumber) {
+        Toast.makeText(this, cardNumber, Toast.LENGTH_SHORT).show();
+    }
 }

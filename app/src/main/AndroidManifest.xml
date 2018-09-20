@@ -22,7 +22,7 @@
 
         <provider
             android:name="android.support.v4.content.FileProvider"
-            android:authorities="com.vysh.fullsizeimage.fileprovider"
+            android:authorities="com.example.mohamed.cardscanner"
             android:exported="false"
             android:grantUriPermissions="true">
             <meta-data
