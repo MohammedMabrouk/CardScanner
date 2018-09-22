@@ -18,9 +18,8 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
-import android.widget.Toast;
+import android.widget.TextView;
 
-import com.example.mohamed.cardscanner.Graphic.GraphicOverlay;
 import com.example.mohamed.cardscanner.Utils.PermissionsUtilities;
 import com.example.mohamed.cardscanner.MLkit.TextRecognition;
 
@@ -29,23 +28,27 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-public class MainActivity extends AppCompatActivity implements TextRecognition.OnCardNumberDetectedListener{
+public class MainActivity extends AppCompatActivity implements TextRecognition.OnCardNumberDetectedListener {
 
     private final static String TAG = "MainActivity" + "TAGG";
+
+
+    // TODO: Remove LOGS
+    // TODO: Make resource files (styles)
+    // TODO: Add on resume activity
+
+    private String cardNumber = "";
+
+    // UI components
     private View mainLayout;
-
-
     private Button startBtn;
     private ImageView capturedImageView;
     private Bitmap capturedImage;
-    private GraphicOverlay mGraphicOverlay;
+    private TextView msgTextView;
+    private Boolean goNext;
 
-
-    private static final int REQUEST_GROUP = 0;
-    private static final int REQUEST_STORAGE = 1;
-
+    private static final int GROUP_REQUEST_NUM = 0;
     private static final int REQUEST_TAKE_PHOTO = 1;
-
     private static String[] PERMISSIONS_GROUP = {Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE};
 
     // path to the captured photo
@@ -56,16 +59,23 @@ public class MainActivity extends AppCompatActivity implements TextRecognition.O
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        goNext = false;
+
         capturedImageView = findViewById(R.id.image_view);
         mainLayout = findViewById(R.id.main_layout);
+        msgTextView = findViewById(R.id.message_tv);
 
-        mGraphicOverlay = findViewById(R.id.graphic_overlay);
 
-        findViewById(R.id.btn_start).setOnClickListener(new View.OnClickListener() {
+        startBtn = findViewById(R.id.btn_start);
+        startBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-
-                startCamera();
+                //goToOperatorActivity();
+                if(!goNext){
+                    startCamera();
+                }else{
+                    goToOperatorActivity();
+                }
 
             }
         });
@@ -78,10 +88,16 @@ public class MainActivity extends AppCompatActivity implements TextRecognition.O
                 != PackageManager.PERMISSION_GRANTED) {
             Log.v(TAG, "Permission are not allowed, asking for it now.");
             requestPermissions();
-        }else {
+        } else {
             Log.v(TAG, "Permission are allowed, starting camera.");
             dispatchTakePictureIntent();
         }
+    }
+
+    private void goToOperatorActivity(){
+        Intent operatorIntent = new Intent(this, OperatorActivity.class);
+        operatorIntent.putExtra("cardNumber", cardNumber);
+        startActivity(operatorIntent);
     }
 
     // permissions
@@ -97,17 +113,14 @@ public class MainActivity extends AppCompatActivity implements TextRecognition.O
                     .setAction(R.string.allow, new View.OnClickListener() {
                         @Override
                         public void onClick(View view) {
-                            ActivityCompat.requestPermissions(MainActivity.this,
-                                    new String[]{android.Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE},
-                                    REQUEST_GROUP);
+                            ActivityCompat.requestPermissions(MainActivity.this, PERMISSIONS_GROUP,
+                                    GROUP_REQUEST_NUM);
                         }
                     })
                     .show();
         } else {
             Log.v(TAG, "First time to ask.");
-            ActivityCompat.requestPermissions(this, new String[]{android.Manifest.permission.CAMERA
-                            , Manifest.permission.WRITE_EXTERNAL_STORAGE},
-                    REQUEST_GROUP);
+            ActivityCompat.requestPermissions(this, PERMISSIONS_GROUP, GROUP_REQUEST_NUM);
         }
     }
 
@@ -117,14 +130,20 @@ public class MainActivity extends AppCompatActivity implements TextRecognition.O
                                            @NonNull int[] grantResults) {
 
         Log.v(TAG, "inside on request result.");
-        if (requestCode == REQUEST_GROUP) {
+        if (requestCode == GROUP_REQUEST_NUM) {
 
             if (PermissionsUtilities.verifyPermissions(grantResults)) {
-                // All required permissions have been granted, display contacts fragment.
+
                 Snackbar.make(mainLayout, R.string.permissions_granted,
-                        Snackbar.LENGTH_SHORT)
-                        .show();
-                // TODO: add continue to camera
+                        Snackbar.LENGTH_SHORT).addCallback(new Snackbar.Callback() {
+                    @Override
+                    public void onDismissed(Snackbar transientBottomBar, int event) {
+                        super.onDismissed(transientBottomBar, event);
+
+                        dispatchTakePictureIntent();
+                    }
+                }).show();
+
             } else {
 
                 Snackbar.make(mainLayout, R.string.permissions_not_granted,
@@ -135,8 +154,6 @@ public class MainActivity extends AppCompatActivity implements TextRecognition.O
             super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         }
     }
-
-
 
 
     private void dispatchTakePictureIntent() {
@@ -219,6 +236,7 @@ public class MainActivity extends AppCompatActivity implements TextRecognition.O
         if (requestCode == REQUEST_TAKE_PHOTO && resultCode == RESULT_OK) {
             // decode image
             setPic();
+            addCapturedImageShape();
             // make it public
             galleryAddPic();
             // run OCR
@@ -226,12 +244,37 @@ public class MainActivity extends AppCompatActivity implements TextRecognition.O
             tr.runTextRecognition();
             //Log.v(TAG, "card Number is: " + tr.getCardNumber());
 
+        } else {
+            //Toast.makeText(this, R.string.no_image_received, Toast.LENGTH_SHORT).show();
+            setMessageText(getString(R.string.no_image_received));
         }
     }
+
+    // UI changes
+    private void addCapturedImageShape() {
+        capturedImageView.setBackground(getResources().getDrawable(R.drawable.bg_captured_image));
+    }
+
+    private void setMessageText(String message) {
+        msgTextView.setVisibility(View.VISIBLE);
+        msgTextView.setText(message);
+    }
+
 
 
     @Override
     public void onNumberDetection(String cardNumber) {
-        Toast.makeText(this, cardNumber, Toast.LENGTH_SHORT).show();
+        this.cardNumber = cardNumber;
+        setMessageText(getString(R.string.number_found) + cardNumber);
+        startBtn.setText(getString(R.string.next_btn));
+        goNext = true;
     }
+
+    @Override
+    public void onNoNumberFound() {
+        //Toast.makeText(this, R.string.number_not_found, Toast.LENGTH_SHORT).show();
+        setMessageText(getString(R.string.number_not_found));
+    }
+
+
 }

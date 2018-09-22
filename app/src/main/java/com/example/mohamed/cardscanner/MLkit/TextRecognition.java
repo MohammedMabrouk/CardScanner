@@ -65,7 +65,7 @@ public class TextRecognition {
     private void processTextRecognitionResult(FirebaseVisionText texts) {
         List<FirebaseVisionText.TextBlock> blocks = texts.getTextBlocks();
         if (blocks.size() == 0) {
-            showToast("No text found");
+            mListener.onNoNumberFound();
             return;
         }
         //mGraphicOverlay.clear();
@@ -81,13 +81,12 @@ public class TextRecognition {
                     mListener.onNumberDetection(cardNumber);
                     break;
                 }
-                /*for (int k = 0; k < elements.size(); k++) {
-                    Log.v(TAG+"char", elements.get(k).getText());
-                    //GraphicOverlay.Graphic textGraphic = new TextGraphic(mGraphicOverlay, elements.get(k));
-                    //mGraphicOverlay.add(textGraphic);
 
-                }*/
             }
+        }
+        // if no valid number was found
+        if(cardNumber.equals("")){
+            mListener.onNoNumberFound();
         }
     }
 
@@ -165,5 +164,6 @@ public class TextRecognition {
 
     public interface OnCardNumberDetectedListener{
         void onNumberDetection(String cardNumber);
+        void onNoNumberFound();
     }
 }

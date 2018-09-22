@@ -1,18 +1,36 @@
 <resources>
     <string name="app_name">Card Scanner</string>
-    
+
     <!-- Permission Strings -->
-    <string name="camera_permission_rationale">You should enable camera to use the scanning feature.</string>
-    <string name="camera_permission_granted">Camera permission has been granted.</string>
-    <string name="camera_permission_not_granted">Camera permission has not been granted.</string>
-
     <string name="permission_rationale">You should allow camera and storage so that scanner can work.</string>
-
-    <string name="storage_permission_rationale">You should enable storage to store the captured image so we can scan numbers.</string>
-    <string name="storage_permission_granted">Storage permission has been granted.</string>
-    <string name="storage_permission_not_granted">Storage permission has not been granted.</string>
-
     <string name="allow">Allow</string>
     <string name="permissions_not_granted">All permissions are not granted.</string>
     <string name="permissions_granted">All permissions are now granted.</string>
+
+    <!--<string name="call_permission_rationale">You should allow calls to charge with the scanned number.</string>
+    <string name="call_permission_granted">Call permission is now granted.</string>
+    <string name="call_permission_not_granted">Call permission was not granted.</string>-->
+
+    <!-- Camera Strings -->
+    <string name="no_image_received">No image was captured.</string>
+
+    <!-- Buttons Strings -->
+    <string name="start_btn">Start</string>
+    <string name="try_again_btn">Try Again</string>
+    <string name="next_btn">Next</string>
+
+
+    <!-- Messages Strings -->
+    <string name="number_found">Got the number, click next.</string>
+    <string name="number_not_found">Number was not found, please try with a closer picture.</string>
+
+    <!-- Operator Screen -->
+    <string name="select_operator">Select operator:</string>
+    <string name="etisalat">Etisalat</string>
+    <string name="vodafone">Vodafone</string>
+    <string name="orange">Orange</string>
+    <string name="we">We</string>
+
+
+
 </resources>

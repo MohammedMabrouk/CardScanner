@@ -14,10 +14,13 @@
     <dimen name="iv_logo_margin">84dp</dimen>
 
     <!--The properties associated with the Button displaying 'Scan Now'-->
-    <dimen name="btn_scan_now_margin">24dp</dimen>
+    <dimen name="btn_scan_now_margin">18dp</dimen>
     <dimen name="btn_scan_now_vertical_padding">8dp</dimen>
-    <dimen name="btn_scan_now_horizontal_padding">60dp</dimen>
-    <dimen name="btn_scan_now_font_size">28sp</dimen>
+    <dimen name="btn_scan_now_horizontal_padding">40dp</dimen>
+    <dimen name="btn_scan_now_font_size">18sp</dimen>
     <dimen name="tv_title_vertical_margin">36dp</dimen>
     <dimen name="tv_title_font_size">18sp</dimen>
+
+    <!-- operators buttons -->
+    <dimen name="operator_btn_width">180dp</dimen>
 </resources>

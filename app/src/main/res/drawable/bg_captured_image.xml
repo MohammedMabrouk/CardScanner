@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item>
+        <shape>
+            <stroke android:width="1dp" android:color="@color/purple"/>
+            <solid android:color="@android:color/transparent"/>
+            <corners android:radius="@dimen/btn_scan_now_corner_radius_purple"/>
+
+            <padding android:left="5dp"
+                android:top="5dp"
+                android:right="5dp"
+                android:bottom="5dp" />
+        </shape>
+    </item>
+</selector>
