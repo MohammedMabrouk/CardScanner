@@ -1,4 +1,4 @@
-package com.example.mohamed.cardscanner.MLkit;
+package com.example.mohamed.cardscanner.mlKit;
 
 import android.content.Context;
 import android.graphics.Bitmap;
@@ -8,7 +8,7 @@ import android.util.Pair;
 import android.widget.ImageView;
 import android.widget.Toast;
 
-import com.example.mohamed.cardscanner.Graphic.GraphicOverlay;
+import com.example.mohamed.cardscanner.graphic.GraphicOverlay;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.ml.vision.FirebaseVision;

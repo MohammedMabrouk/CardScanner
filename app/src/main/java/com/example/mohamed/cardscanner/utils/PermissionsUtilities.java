@@ -1,4 +1,4 @@
-package com.example.mohamed.cardscanner.Utils;
+package com.example.mohamed.cardscanner.utils;
 
 import android.content.pm.PackageManager;
 
