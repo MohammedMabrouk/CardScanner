@@ -16,7 +16,7 @@
 
     <!-- Buttons Strings -->
     <string name="start_btn">Start</string>
-    <string name="try_again_btn">Try Again</string>
+    <string name="new_scan_btn">New Scan</string>
     <string name="next_btn">Next</string>
 
 
@@ -25,7 +25,7 @@
     <string name="number_not_found">Number was not found, please try with a closer picture.</string>
 
     <!-- Operator Screen -->
-    <string name="select_operator">Select operator:</string>
+    <string name="select_operator">Select operator</string>
     <string name="etisalat">Etisalat</string>
     <string name="vodafone">Vodafone</string>
     <string name="orange">Orange</string>
@@ -39,18 +39,22 @@
     <string name="pref_section_general">General</string>
     <string name="pref_section_about">About</string>
     <!-- Image Saving -->
-    <string name="pref_save_img_key">save_img_checkbox</string>
+   <!-- <string name="pref_save_img_key">save_img_checkbox</string>
     <string name="pref_save_img_summary">Use this checkbox to choose whether to save images after scanning</string>
-    <string name="pref_save_img_title">Save image after scanning</string>
+    <string name="pref_save_img_title">Save image after scanning</string>-->
     <!-- Font Size -->
     <string name="pref_font_size_key">font_size_list</string>
     <string name="pref_font_size_summary">Specify displaying font size</string>
     <string name="pref_font_size_title">Font Size</string>
     <string name="pref_font_size_dialog_title">Font Size</string>
+    <!-- app version -->
+    <string name="pref_version_title">Version</string>
+    <string name="pref_version_key">app_version</string>
+    <string name="pref_version_summary">0.0</string>
     <!-- Developer -->
-    <string name="pref_developer_title">Developer</string>
+    <!-- <string name="pref_developer_title">Developer</string>
     <string name="pref_developer_key">developer_info</string>
-    <string name="pref_developer_summary">Mohamed Mabrouk</string>
+    <string name="pref_developer_summary">Mohamed Mabrouk</string>-->
     <!-- Feedback -->
     <string name="pref_feedback_title">Send Feedback</string>
     <string name="pref_feedback_key">feedback_pref</string>

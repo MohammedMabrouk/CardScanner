@@ -1,12 +1,15 @@
 package com.example.mohamed.cardscanner.view;
 
 import android.Manifest;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.icu.util.UniversalTimeScale;
+import android.media.ThumbnailUtils;
 import android.net.Uri;
 import android.os.Environment;
 import android.preference.PreferenceManager;
@@ -18,12 +21,15 @@ import android.support.v4.content.FileProvider;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
+import android.util.Base64;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -32,9 +38,13 @@ import com.example.mohamed.cardscanner.SettingsActivity;
 import com.example.mohamed.cardscanner.utils.PermissionsUtilities;
 import com.example.mohamed.cardscanner.mlKit.TextRecognition;
 import com.example.mohamed.cardscanner.utils.PreferenceUtilities;
+import com.squareup.picasso.Picasso;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -52,10 +62,13 @@ public class MainActivity extends AppCompatActivity implements TextRecognition.O
     // UI components
     private View mainLayout;
     private Button startBtn;
+    private Button newScanBtn;
     private ImageView capturedImageView;
     private Bitmap capturedImage;
     private TextView msgTextView;
+    private ProgressBar loadingSpinner;
     private Boolean goNext;
+
 
     private static final int GROUP_REQUEST_NUM = 0;
     private static final int REQUEST_TAKE_PHOTO = 1;
@@ -64,12 +77,14 @@ public class MainActivity extends AppCompatActivity implements TextRecognition.O
     // path to the captured photo
     String mCurrentPhotoPath;
 
+    File photoFile = null;
+
     // preferences
     private PreferenceUtilities prefUtils;
     private static final boolean PREF_SAVE_IMG_ENABLED = true;
     private static final boolean PREF_SAVE_IMG_DISABLED = false;
     private static final int PREF_FONT_SIZE_NORMAL = 18;
-    private static final int PREF_FONT_SIZE_LARGE = 20;
+    private static final int PREF_FONT_SIZE_LARGE = 24;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -87,6 +102,10 @@ public class MainActivity extends AppCompatActivity implements TextRecognition.O
         mainLayout = findViewById(R.id.main_layout);
         msgTextView = findViewById(R.id.message_tv);
         startBtn = findViewById(R.id.btn_start);
+        newScanBtn = findViewById(R.id.btn_new_scan);
+        loadingSpinner = findViewById(R.id.loading_spinner);
+
+
 
         // load prefs
         loadPreferences();
@@ -99,19 +118,42 @@ public class MainActivity extends AppCompatActivity implements TextRecognition.O
                 //Toast.makeText(MainActivity.this, "save image: " + prefUtils.getPrefSaveImg() + ", font size: " + prefUtils.getPrefFontSize(), Toast.LENGTH_SHORT).show();
                 if(!goNext){
                     startCamera();
+
                 }else{
+
                     goToOperatorActivity();
                 }
 
             }
         });
+
+        newScanBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                startCamera();
+                // reset
+                hideNewScanBtn();
+                startBtn.setText(getString(R.string.start_btn));
+                goNext = false;
+            }
+        });
+    }
+
+    @Override
+    protected void onResume() {
+        loadPreferences();
+        super.onResume();
     }
 
     private void loadPreferences(){
         if(prefUtils.getPrefFontSize().equals("0")){
             msgTextView.setTextSize(PREF_FONT_SIZE_NORMAL);
+            startBtn.setTextSize(PREF_FONT_SIZE_NORMAL);
+            newScanBtn.setTextSize(PREF_FONT_SIZE_NORMAL);
         }else if(prefUtils.getPrefFontSize().equals("1")){
             msgTextView.setTextSize(PREF_FONT_SIZE_LARGE);
+            startBtn.setTextSize(PREF_FONT_SIZE_LARGE);
+            newScanBtn.setTextSize(PREF_FONT_SIZE_LARGE);
         }
     }
 
@@ -146,6 +188,8 @@ public class MainActivity extends AppCompatActivity implements TextRecognition.O
     }
 
     private void goToOperatorActivity(){
+        //
+        // deleteImageFile();
         Intent operatorIntent = new Intent(this, OperatorActivity.class);
         operatorIntent.putExtra("cardNumber", cardNumber);
         startActivity(operatorIntent);
@@ -191,7 +235,7 @@ public class MainActivity extends AppCompatActivity implements TextRecognition.O
                     public void onDismissed(Snackbar transientBottomBar, int event) {
                         super.onDismissed(transientBottomBar, event);
 
-                        dispatchTakePictureIntent();
+                        //dispatchTakePictureIntent();
                     }
                 }).show();
 
@@ -212,7 +256,6 @@ public class MainActivity extends AppCompatActivity implements TextRecognition.O
         // Ensure that there's a camera activity to handle the intent
         if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
             // Create the File where the photo should go
-            File photoFile = null;
             try {
                 photoFile = createImageFile();
             } catch (IOException ex) {
@@ -226,6 +269,7 @@ public class MainActivity extends AppCompatActivity implements TextRecognition.O
                 takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI);
                 startActivityForResult(takePictureIntent, REQUEST_TAKE_PHOTO);
             }
+            //startActivityForResult(takePictureIntent, REQUEST_TAKE_PHOTO);
         }
     }
 
@@ -242,34 +286,51 @@ public class MainActivity extends AppCompatActivity implements TextRecognition.O
 
     // decode the image
     private void setPic() {
-        // Get the dimensions of the View
-        int targetW = capturedImageView.getWidth();
-        int targetH = capturedImageView.getHeight();
+        try {
+            // Get the dimensions of the View
+            int targetW = capturedImageView.getWidth();
+            int targetH = capturedImageView.getHeight();
 
-        // Get the dimensions of the bitmap
-        BitmapFactory.Options bmOptions = new BitmapFactory.Options();
-        bmOptions.inJustDecodeBounds = true;
-        BitmapFactory.decodeFile(mCurrentPhotoPath, bmOptions);
-        int photoW = bmOptions.outWidth;
-        int photoH = bmOptions.outHeight;
+            // Get the dimensions of the bitmap
+            BitmapFactory.Options bmOptions = new BitmapFactory.Options();
+            bmOptions.inJustDecodeBounds = true;
+            //BitmapFactory.decodeFile(mCurrentPhotoPath, bmOptions);
+            int photoW = bmOptions.outWidth;
+            int photoH = bmOptions.outHeight;
 
-        // Determine how much to scale down the image
-        int scaleFactor = Math.min(photoW / targetW, photoH / targetH);
+            // Determine how much to scale down the image
+            int scaleFactor = Math.min(photoW / targetW, photoH / targetH);
 
-        // Decode the image file into a Bitmap sized to fill the View
-        bmOptions.inJustDecodeBounds = false;
-        bmOptions.inSampleSize = scaleFactor;
-        bmOptions.inPurgeable = true;
+            // Decode the image file into a Bitmap sized to fill the View
+            bmOptions.inJustDecodeBounds = false;
+            bmOptions.inSampleSize = scaleFactor;
+            bmOptions.inPurgeable = true;
 
-        capturedImage = BitmapFactory.decodeFile(mCurrentPhotoPath, bmOptions);
-        capturedImageView.setImageBitmap(capturedImage);
+            Log.v(TAG, "setting image of: " + mCurrentPhotoPath);
+
+            capturedImage = BitmapFactory.decodeFile(mCurrentPhotoPath, bmOptions);
+
+
+            //capturedImage = BitmapFactory.decodeResource(getResources(),R.drawable.tiger);
+
+
+            Bitmap ThumbImage = ThumbnailUtils.extractThumbnail(capturedImage, 168, 300);
+
+            capturedImageView.setImageBitmap(ThumbImage);
+
+        }catch (Exception e){
+
+        }
     }
 
     private File createImageFile() throws IOException {
         // Create an image file name
         String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
         String imageFileName = "JPEG_" + timeStamp + "_";
+
         File storageDir = getExternalFilesDir(Environment.DIRECTORY_PICTURES);
+        //File storageDir = getFilesDir();
+
         File image = File.createTempFile(
                 imageFileName,  /* prefix */
                 ".jpg",         /* suffix */
@@ -278,28 +339,56 @@ public class MainActivity extends AppCompatActivity implements TextRecognition.O
 
         // Save a file: path for use with ACTION_VIEW intents
         mCurrentPhotoPath = image.getAbsolutePath();
+        Log.v(TAG, "Createfile, path: " + mCurrentPhotoPath);
+
+        //galleryAddPic();
+
         return image;
+    }
+
+    private void deleteImageFile(){
+        //File path = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM);
+        File file = new File(mCurrentPhotoPath);
+        Log.v(TAG, "delete file, path: " + mCurrentPhotoPath);
+        //Log.v(TAG, "parent path: " + path);
+        if(file.exists()){
+            if(file.delete()){
+                Log.v(TAG, "Image Deleted");
+            }else{
+                Log.v(TAG, "Image not deleted");
+            }
+        }
     }
 
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        hideMessageText();
+        showSpinner();
         if (requestCode == REQUEST_TAKE_PHOTO && resultCode == RESULT_OK) {
             // decode image
             setPic();
             addCapturedImageShape();
             // make it public
-            galleryAddPic();
+            //galleryAddPic();
             // run OCR
             TextRecognition tr = new TextRecognition(this, capturedImage, this);
             tr.runTextRecognition();
             //Log.v(TAG, "card Number is: " + tr.getCardNumber());
+            //Log.v(TAG, "rows deleted: " + this.getContentResolver().delete(data.getData(), null, null));
 
         } else {
             //Toast.makeText(this, R.string.no_image_received, Toast.LENGTH_SHORT).show();
+            hideSpinner();
             setMessageText(getString(R.string.no_image_received));
         }
+
+        // important! Mandatory
+        deleteImageFile();
     }
+
+
+
 
     // UI changes
     private void addCapturedImageShape() {
@@ -311,21 +400,41 @@ public class MainActivity extends AppCompatActivity implements TextRecognition.O
         msgTextView.setText(message);
     }
 
-
+    private void hideMessageText(){
+        msgTextView.setVisibility(View.GONE);
+    }
 
     @Override
     public void onNumberDetection(String cardNumber) {
+        hideSpinner();
         this.cardNumber = cardNumber;
-        setMessageText(getString(R.string.number_found) + cardNumber);
+        setMessageText(getString(R.string.number_found));
         startBtn.setText(getString(R.string.next_btn));
         goNext = true;
+        showNewScanBtn();
     }
 
     @Override
     public void onNoNumberFound() {
+        hideSpinner();
         //Toast.makeText(this, R.string.number_not_found, Toast.LENGTH_SHORT).show();
         setMessageText(getString(R.string.number_not_found));
     }
 
+    private void showSpinner(){
+        loadingSpinner.setVisibility(View.VISIBLE);
+    }
+
+    private void hideSpinner(){
+        loadingSpinner.setVisibility(View.GONE);
+    }
+
+    private void showNewScanBtn(){
+        newScanBtn.setVisibility(View.VISIBLE);
+    }
+
+    private void hideNewScanBtn(){
+        newScanBtn.setVisibility(View.GONE);
+    }
 
 }

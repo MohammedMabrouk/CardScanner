@@ -7,14 +7,14 @@
     android:orientation="vertical"
     tools:context=".SettingsActivity">
 
-    <!--<android.support.v7.widget.Toolbar
+    <android.support.v7.widget.Toolbar
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
         android:layout_height="56dp"
         android:background="@color/blue"
-        android:theme="@style/ThemeOverlay.AppCompat.ActionBar"
+        app:theme="@style/ToolbarColoredBackArrow"
         app:titleTextColor="@color/white"
-        app:title="@string/settings_str"/>-->
+        app:title="@string/settings_str"/>
 
     <fragment
         android:id="@+id/settings_fragment"

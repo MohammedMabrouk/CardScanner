@@ -1,9 +1,12 @@
 package com.example.mohamed.cardscanner;
 
+import android.app.ActionBar;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.content.res.Resources;
+import android.graphics.PorterDuff;
 import android.media.Ringtone;
 import android.media.RingtoneManager;
 import android.net.Uri;
@@ -17,6 +20,7 @@ import android.preference.PreferenceManager;
 import android.preference.PreferenceScreen;
 import android.preference.RingtonePreference;
 import android.preference.SwitchPreference;
+import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.Menu;
@@ -32,14 +36,37 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_settings);
+
+
+
+
+
+        // Setting the Toolbar
+        Toolbar mToolBar = findViewById(R.id.toolbar);
+        setSupportActionBar(mToolBar);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+
     }
 
 
     public static class MainPreferenceFragment extends PreferenceFragment {
+        private Preference appVersionPref;
+
         @Override
         public void onCreate(final Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
             addPreferencesFromResource(R.xml.pref_main);
+
+            appVersionPref = findPreference(getActivity().getString(R.string.pref_version_key));
+
+
+            try {
+                PackageInfo pInfo = getActivity().getPackageManager().getPackageInfo(getActivity().getPackageName(), 0);
+                String version = pInfo.versionName;
+                appVersionPref.setSummary(version);
+            } catch (PackageManager.NameNotFoundException e) {
+                e.printStackTrace();
+            }
 
             // feedback preference click listener
             Preference myPref = findPreference(getString(R.string.pref_feedback_key));
@@ -65,7 +92,7 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
      * Appends the necessary device information to email body
      * useful when providing support
      */
-   public static void sendFeedback(Context context) {
+    public static void sendFeedback(Context context) {
         String body = null;
         try {
             body = context.getPackageManager().getPackageInfo(context.getPackageName(), 0).versionName;

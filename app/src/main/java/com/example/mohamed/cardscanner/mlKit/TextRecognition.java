@@ -2,9 +2,11 @@ package com.example.mohamed.cardscanner.mlKit;
 
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.os.AsyncTask;
 import android.support.annotation.NonNull;
 import android.util.Log;
 import android.util.Pair;
+import android.view.View;
 import android.widget.ImageView;
 import android.widget.Toast;
 
@@ -49,7 +51,8 @@ public class TextRecognition {
                         new OnSuccessListener<FirebaseVisionText>() {
                             @Override
                             public void onSuccess(FirebaseVisionText texts) {
-                                processTextRecognitionResult(texts);
+                                //processTextRecognitionResult(texts);
+                                new OCRTask().execute(texts);
                             }
                         })
                 .addOnFailureListener(
@@ -62,11 +65,11 @@ public class TextRecognition {
                         });
     }
 
-    private void processTextRecognitionResult(FirebaseVisionText texts) {
+    private boolean processTextRecognitionResult(FirebaseVisionText texts) {
         List<FirebaseVisionText.TextBlock> blocks = texts.getTextBlocks();
         if (blocks.size() == 0) {
-            mListener.onNoNumberFound();
-            return;
+            //mListener.onNoNumberFound();
+            return false;
         }
         //mGraphicOverlay.clear();
         for (int i = 0; i < blocks.size(); i++) {
@@ -78,15 +81,19 @@ public class TextRecognition {
 
                 if(isValidCardNumber(lines.get(j).getText())){
                     Log.v(TAG, "card number is: "+ cardNumber);
-                    mListener.onNumberDetection(cardNumber);
+                    //mListener.onNumberDetection(cardNumber);
                     break;
+                    //return true;
                 }
 
             }
         }
         // if no valid number was found
         if(cardNumber.equals("")){
-            mListener.onNoNumberFound();
+            //mListener.onNoNumberFound();
+            return false;
+        }else {
+            return true;
         }
     }
 
@@ -165,5 +172,28 @@ public class TextRecognition {
     public interface OnCardNumberDetectedListener{
         void onNumberDetection(String cardNumber);
         void onNoNumberFound();
+    }
+
+
+
+    private class OCRTask extends AsyncTask<FirebaseVisionText, Void, Boolean> {
+        private FirebaseVisionText Texts;
+
+
+        @Override
+        protected Boolean doInBackground(FirebaseVisionText... Texts) {
+            return processTextRecognitionResult(Texts[0]);
+        }
+
+        @Override
+        protected void onPostExecute(Boolean result) {
+            if(result){
+                mListener.onNumberDetection(cardNumber);
+                Log.v("TAGG", "found");
+            }else{
+                mListener.onNoNumberFound();
+                Log.v("TAGG", "not found");
+            }
+        }
     }
 }

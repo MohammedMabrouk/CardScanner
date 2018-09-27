@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
     <PreferenceCategory android:title="@string/pref_section_general">
-        <SwitchPreference
+        <!--<SwitchPreference
             android:defaultValue="false"
             android:key="@string/pref_save_img_key"
             android:summary="@string/pref_save_img_summary"
-            android:title="@string/pref_save_img_title"/>
+            android:title="@string/pref_save_img_title"/>-->
 
         <ListPreference
             android:defaultValue="0"
@@ -19,10 +19,17 @@
 
     <PreferenceCategory android:title="@string/pref_section_about">
         <Preference
+            android:title="@string/pref_version_title"
+            android:key="@string/pref_version_key"
+            android:summary="@string/pref_version_summary">
+        </Preference>
+
+        <!--<Preference
             android:title="@string/pref_developer_title"
             android:key="@string/pref_developer_key"
             android:summary="@string/pref_developer_summary">
-        </Preference>
+        </Preference>-->
+
 
         <Preference
             android:key="@string/pref_feedback_key"

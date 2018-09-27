@@ -1,62 +1,90 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/main_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
     android:background="@mipmap/background"
-    tools:context=".view.MainActivity"
-    android:gravity="center_horizontal">
+
+    android:orientation="vertical"
+    tools:context=".view.MainActivity">
 
     <android.support.v7.widget.Toolbar
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
         android:layout_height="56dp"
+        android:layout_marginBottom="16dp"
         android:background="@android:color/transparent"
         android:theme="@style/ThemeOverlay.AppCompat.ActionBar"
-        android:layout_marginBottom="16dp"
         app:titleTextColor="@color/white" />
 
-    <ImageView
-        android:id="@+id/image_view"
-        android:layout_width="196.8dp"
-        android:layout_height="350dp"
-        android:layout_marginTop="8dp"
-        android:scaleType="fitStart"
-        android:src="@mipmap/logo"/>
-
-    <TextView
-        android:id="@+id/message_tv"
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_margin="8dp"
-        android:textSize="18sp"
-        android:textAlignment="center"
-        android:fontFamily="sans-serif-thin"
-        android:textColor="@color/white"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/image_view"
-        android:visibility="invisible"/>
+        android:layout_height="match_parent"
+        android:gravity="center_horizontal"
+        android:orientation="vertical">
 
-    <Button
-        android:id="@+id/btn_start"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_margin="@dimen/btn_scan_now_margin"
-        android:background="@drawable/bg_btn_scannow"
-        android:fontFamily="sans-serif-thin"
-        android:paddingBottom="@dimen/btn_scan_now_vertical_padding"
-        android:paddingLeft="@dimen/btn_scan_now_horizontal_padding"
-        android:paddingRight="@dimen/btn_scan_now_horizontal_padding"
-        android:paddingTop="@dimen/btn_scan_now_vertical_padding"
-        android:text="@string/start_btn"
-        android:textAllCaps="false"
-        android:textColor="@color/scanbtn"
-        android:textSize="@dimen/btn_scan_now_font_size" />
+        <ImageView
+            android:id="@+id/image_view"
+            android:layout_width="140.5dp"
+            android:layout_height="250dp"
+            android:layout_marginTop="8dp"
+            android:scaleType="fitStart"
+            android:src="@mipmap/logo" />
 
+        <TextView
+            android:id="@+id/message_tv"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="8dp"
+            android:fontFamily="sans-serif-thin"
+            android:textAlignment="center"
+            android:textColor="@color/white"
+            android:textSize="18sp"
+            android:visibility="gone"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/image_view" />
+
+        <ProgressBar
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:layout_margin="8dp"
+            android:id="@+id/loading_spinner"
+            style="?android:attr/progressBarStyleLarge"
+            android:visibility="gone"/>
+
+        <Button
+            android:id="@+id/btn_start"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="@dimen/btn_scan_now_margin"
+            android:background="@drawable/bg_btn_scannow"
+            android:fontFamily="sans-serif-thin"
+            android:paddingBottom="@dimen/btn_scan_now_vertical_padding"
+            android:paddingLeft="@dimen/btn_scan_now_horizontal_padding"
+            android:paddingRight="@dimen/btn_scan_now_horizontal_padding"
+            android:paddingTop="@dimen/btn_scan_now_vertical_padding"
+            android:text="@string/start_btn"
+            android:textAllCaps="false"
+            android:textColor="@color/scanbtn"
+            android:textSize="@dimen/btn_scan_now_font_size" />
+
+        <Button
+            android:id="@+id/btn_new_scan"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/bg_btn_scannow"
+            android:fontFamily="sans-serif-thin"
+            android:paddingBottom="@dimen/btn_scan_now_vertical_padding"
+            android:paddingLeft="@dimen/btn_scan_now_horizontal_padding"
+            android:paddingRight="@dimen/btn_scan_now_horizontal_padding"
+            android:paddingTop="@dimen/btn_scan_now_vertical_padding"
+            android:text="@string/new_scan_btn"
+            android:textAllCaps="false"
+            android:textColor="@color/scanbtn"
+            android:textSize="@dimen/btn_scan_now_font_size"
+            android:visibility="gone"/>
+    </LinearLayout>
 </LinearLayout>
-
